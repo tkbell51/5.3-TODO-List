@@ -1,6 +1,7 @@
 const express = require('express');
 const mustacheExpress = require('mustache-express');
 const bodyParser = require('body-parser');
+const models = require('./models');
 
 const app = express();
 
@@ -12,31 +13,38 @@ app.set('views', './views');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-var todos = [];
-var complete = [];
-app.get("/", function (req, res) {
-  var idx=0,
-  context = {
-    todos : todos,
-    complete : complete,
-    id: function(){
-      return idx++;
-    }
-  };
 
-  res.render('index', context);
+app.post("/", function (req, res){
+  console.log(req.body.todo);
+  models.Todo.create({
+    task: req.body.todo,
+    assignee: req.body.assignee
+  });
+    res.redirect('/');
+
 });
 
+
 app.post("/", function (req, res) {
-  todos.push(req.body.todo);
+  models.Todo.findAll().then(function(todos){
+   attributes: ["task", "assignee"];
+   console.log(todos);
   res.redirect('/');
+});
+});
+
+app.get("/", (req, res)=>{
+     models.Todo.findAll().then(function(todos){
+       res.render('index', {model: todos});
+    });
+
 });
 
 app.post('/todo/:id/complete/', function(req, res){
   var id = Number(req.params.id);
   var selection = todos[id];
   complete.push(selection);
-  todos.splice(id, 1);
+
   res.redirect('/');
 });
 app.listen(3000);
